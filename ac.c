@@ -2,7 +2,7 @@
 #include <math.h>
 #define MAX_SOURCELEN 100000
 #define MAX_P 100
-#define DEFAULT_SOURCELEN 32
+#define DEFAULT_SOURCELEN 8
 #define DEFAULT_P 50
 
 // prints the program usage instructions
@@ -20,6 +20,8 @@ unsigned char atoprob(char *arg);
 // converts arg into sourcelen
 unsigned char atosourcelen(char *arg);
 
+
+
 // the probability that a symbol takes the value 0
 double p0;
 
@@ -28,6 +30,14 @@ int sourcelen;
 
 // verbose boolean
 unsigned char verbose;
+
+// the left bound of the interval
+double a;
+
+// the right bound of the interval
+double b;
+
+
 
 unsigned char atosourcelen(char *arg)
 {
@@ -114,15 +124,26 @@ unsigned char emit_source_symbol()
 int main(int argc, char *argv[])
 {
   // Initializes variables
-  p0 = DEFAULT_P;
+  p0 = DEFAULT_P/100.0;
   sourcelen = DEFAULT_SOURCELEN;
+  a = 0;
+  b = 1;
   srand(time(NULL));
   if(!get_args(argc, argv)) return 0;
+  if(verbose) printf("ac invoked with: p0 = %lf, sourcelen = %d\n", p0, sourcelen);
 
   int i;
+  unsigned char cursym;
+  printf("Source:\n");
   for (i = 0; i < sourcelen; ++i)
   {
-    printf("%d", emit_source_symbol());
+    cursym = emit_source_symbol();
+    // TODO: interval update
+
+    if (verbose) printf("\n----- i=%d -----\n", i);
+    if (verbose) printf("Source symbol: ");
+    printf("%d", cursym);
+    if (verbose) printf("\nInterval set:\na = %lf\nb = %lf\n", a, b);
   }
   printf("\n");
 
