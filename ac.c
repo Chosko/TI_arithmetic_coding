@@ -13,20 +13,9 @@ unsigned char emit_source_symbol(double p);
 // converts arg into probability
 double atoprob(char *arg);
 
-// converts arg into blocklen
-int atoblocklen(char *arg);
 
-int atoblocklen(char *arg)
-{
-  int blocklen = atoi(arg);
-  if (blocklen >= 1 && blocklen <= MAX_BLOCKLEN)
-    return blocklen;
-  else
-  {
-    print_usage();
-    return -1;
-  }
-}
+double p0;
+unsigned char verbose;
 
 double atoprob(char *arg)
 {
@@ -42,16 +31,14 @@ double atoprob(char *arg)
 
 void print_usage()
 {
-  printf("USAGE: ac [-v] [<p0> [<blocklen>]]\n");
-  printf("  Executes the arithmetic coding of a source that generates random blocks of binary symbols\n");
-  printf("  Default parameters are: <p0> = 0.5; <blocklen> = 8\n");
+  printf("USAGE: ac [-v] [<p0>]\n");
+  printf("  Executes the arithmetic coding of a source that generates random binary symbols\n");
+  printf("  Default parameters are: <p0> = 0.5\n");
   printf("PARAMETERS:\n");
   printf("  -v\t\tverbose\n");
   printf("  <p0>\t\tthe probability (in percent) that a symbol takes the value 0\n");
-  printf("  <blocklen>\tthe length of a block of symbols\n");
   printf("CONSTRAINTS:\n");
   printf("  <p0>\t\tmust be an integer between 0 and %d\n", MAX_P);
-  printf("  <blocklen>\tmust be an integer between 1 and %d\n", MAX_BLOCKLEN);
 }
 
 
@@ -62,9 +49,8 @@ unsigned char emit_source_symbol(double p)
 
 int main(int argc, char *argv[])
 {
-  double p0 = 0.5;
-  unsigned char blocklen = 8;
-  unsigned char verbose = 0;
+  p0 = 0.5;
+  verbose = 0;
   if (argc == 1);
   else if (argc == 2)
   {
@@ -88,35 +74,16 @@ int main(int argc, char *argv[])
     }
     else
     {
-      p0 = atoprob(argv[1]);
-      if (p0 == -1) return 0;
-      int int_blocklen = atoblocklen(argv[2]);
-      if(int_blocklen == -1) return 0;
-      else blocklen = (unsigned char) int_blocklen;
-    }
-  }
-  else if (argc == 4)
-  {
-    if(argv[1][0] == '-' && argv[1][1] == 'v' && argv[1][2] == 0)
-    {
-      verbose = 1;
-      p0 = atoprob(argv[2]);
-      if (p0 == -1) return 0;
-      int int_blocklen = atoblocklen(argv[3]);
-      if(int_blocklen == -1) return 0;
-      else blocklen = (unsigned char) int_blocklen;
-    }
-    else
-    {
       print_usage();
       return 0;
     }
-  }
-  else
+  }else
   {
     print_usage();
     return 0;
   }
+
+
 
   return 0;
 }
