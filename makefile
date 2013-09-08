@@ -3,7 +3,7 @@ compile:
 
 run:
 	gcc -o ac.out ac.c
-	ac
+	./ac.out
 
 clean:
 	rm ac.out
