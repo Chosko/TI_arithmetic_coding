@@ -7,6 +7,9 @@
 // prints the program usage instructions
 void print_usage();
 
+// try to get the args of the program
+unsigned char get_args();
+
 // emits a binary symbol (bit) with P(X=0) = p0
 unsigned char emit_source_symbol();
 
@@ -80,17 +83,8 @@ void print_usage()
   printf("  <sourcelen>\tmust be an integer between 1 and %d\n", MAX_SOURCELEN);
 }
 
-
-unsigned char emit_source_symbol()
+unsigned char get_args(int argc, char *argv[])
 {
-  return ((double)(rand()%1000)) / 1000 >= p0;
-}
-
-int main(int argc, char *argv[])
-{
-  p0 = 0.5;
-  sourcelen = 8;
-
   if (argc == 1);
   else if(argc <= 4)
   {
@@ -108,6 +102,20 @@ int main(int argc, char *argv[])
     print_usage();
     return 0;
   }
+  return 1;
+}
+
+unsigned char emit_source_symbol()
+{
+  return ((double)(rand()%1000)) / 1000 >= p0;
+}
+
+int main(int argc, char *argv[])
+{
+  // Initializes variables
+  p0 = 0.5;
+  sourcelen = 8;
+  if(!get_args(argc, argv)) return 0;
 
   printf("verbose: %d, p0: %lf, sourcelen: %d\n", verbose, p0, sourcelen);
 
