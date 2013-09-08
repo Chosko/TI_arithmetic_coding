@@ -2,7 +2,8 @@
 #include <math.h>
 #define MAX_SOURCELEN 100000
 #define MAX_P 100
-
+#define DEFAULT_SOURCELEN 32
+#define DEFAULT_P 50
 
 // prints the program usage instructions
 void print_usage();
@@ -73,7 +74,7 @@ void print_usage()
 {
   printf("USAGE: ac [-v] [<p0> [<sourcelen>]]\n");
   printf("  Executes the arithmetic coding of a source that generates a random stream of binary symbols\n");
-  printf("  Default parameters are: <p0> = 0.5; <sourcelen> = 32\n");
+  printf("  Default parameters are: <p0> = %d; <sourcelen> = %d\n", DEFAULT_P, DEFAULT_SOURCELEN);
   printf("PARAMETERS:\n");
   printf("  -v\t\tverbose\n");
   printf("  <p0>\t\tthe probability (in percent) that a symbol takes the value 0\n");
@@ -113,16 +114,17 @@ unsigned char emit_source_symbol()
 int main(int argc, char *argv[])
 {
   // Initializes variables
-  p0 = 0.5;
-  sourcelen = 8;
+  p0 = DEFAULT_P;
+  sourcelen = DEFAULT_SOURCELEN;
+  srand(time(NULL));
   if(!get_args(argc, argv)) return 0;
 
-  printf("verbose: %d, p0: %lf, sourcelen: %d\n", verbose, p0, sourcelen);
+  int i;
+  for (i = 0; i < sourcelen; ++i)
+  {
+    printf("%d", emit_source_symbol());
+  }
+  printf("\n");
 
-  // int i;
-  // for (i = 0; i < sourcelen; ++i)
-  // {
-  //   printf("%d\n", emit_source_symbol());
-  // }
   return 0;
 }
