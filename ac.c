@@ -134,11 +134,18 @@ int main(int argc, char *argv[])
 
   int i;
   unsigned char cursym;
+  double splitpoint;
   printf("Source:\n");
   for (i = 0; i < sourcelen; ++i)
   {
-    cursym = emit_source_symbol();
-    // TODO: interval update
+    cursym = emit_source_symbol(); //the current symbol emitted by the source
+    splitpoint = a + p0 * (b-a);  //the split point between the left and the right sides of the interval
+
+    // interval update
+    if (cursym)
+      b = splitpoint;
+    else
+      a = splitpoint;
 
     if (verbose) printf("\n----- i=%d -----\n", i);
     if (verbose) printf("Source symbol: ");
