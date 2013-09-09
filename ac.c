@@ -25,6 +25,9 @@ unsigned char atosourcelen(char *);
 // the probability that a symbol takes the value 0
 double p0;
 
+// the estimated probability
+double pe;
+
 // the length of the source stream
 int sourcelen;
 
@@ -129,6 +132,7 @@ int main(int argc, char *argv[])
   sourcelen = DEFAULT_SOURCELEN;
   a = 0;
   b = 1;
+  pe = 0.5;
   srand(time(NULL));
   if(!get_args(argc, argv)) return 0;
   if(verbose) printf("ac invoked with: p0 = %lf, sourcelen = %d\n", p0, sourcelen);
@@ -136,6 +140,8 @@ int main(int argc, char *argv[])
   int i;
   int r1count = 0;
   int r2count = 0;
+  int cnt0 = 0;
+  int cntTot = 0;
   unsigned char cursym;
   unsigned char underflow;
   unsigned char inaccurate = 0;
@@ -145,10 +151,13 @@ int main(int argc, char *argv[])
   {
     underflow = 0;
     cursym = emit_source_symbol(); //the current symbol emitted by the source
-    splitpoint = a + p0 * (b-a);  //the split point between the left and the right sides of the interval
+    splitpoint = a + pe * (b-a);  //the split point between the left and the right sides of the interval
+    if (!cursym) cnt0 ++;
+    cntTot++;
+
     
     // Underflow detection
-    if(p0 != 1 && (splitpoint == a || splitpoint == b))
+    if(pe != 1 && (splitpoint == a || splitpoint == b))
     {
       underflow = 1;
       inaccurate = 1;
@@ -164,7 +173,8 @@ int main(int argc, char *argv[])
     if (verbose) printf("\n----- i=%d -----\n", i);
     if (verbose) printf("Source symbol: ");
     printf("%d", cursym);
-    if (verbose) printf("\nInterval set:\na = %lf\nb = %lf\n", a, b);
+    if (verbose) printf("\nEstimated probability of Zero: %lf\n", pe);
+    if (verbose) printf("Interval set:\na = %lf\nb = %lf\n", a, b);
     if (verbose && underflow) printf("UNDERFLOW DETECTED!\n");
 
     // interval renormalization
@@ -172,7 +182,7 @@ int main(int argc, char *argv[])
     {
       a *= 2;
       b *= 2;
-      if (verbose) printf("Interval renorlized!\n");
+      if (verbose) printf("Interval renormalized!\n");
       r1count++;
     }
     else if (a > 0.5) //R2
@@ -182,6 +192,9 @@ int main(int argc, char *argv[])
       if (verbose) printf("Interval renormalized!\n");
       r2count++;
     }
+
+    // probability estimation update
+    pe = (1+(double)cnt0)/(2+cntTot);
   }
 
   int L = ceil(log2(1/(b-a))) + 1 + r1count + r2count;
