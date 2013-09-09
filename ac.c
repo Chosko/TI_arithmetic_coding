@@ -15,10 +15,10 @@ unsigned char get_args();
 unsigned char emit_source_symbol();
 
 // converts arg into probability
-unsigned char atoprob(char *arg);
+unsigned char atoprob(char *);
 
 // converts arg into sourcelen
-unsigned char atosourcelen(char *arg);
+unsigned char atosourcelen(char *);
 
 
 
@@ -36,6 +36,7 @@ double a;
 
 // the right bound of the interval
 double b;
+
 
 
 
@@ -145,7 +146,7 @@ int main(int argc, char *argv[])
     splitpoint = a + p0 * (b-a);  //the split point between the left and the right sides of the interval
     
     // Underflow detection
-    if(splitpoint == a || splitpoint == b)
+    if(p0 != 1 && (splitpoint == a || splitpoint == b))
     {
       underflow = 1;
       inaccurate = 1;
@@ -153,9 +154,9 @@ int main(int argc, char *argv[])
 
     // interval update
     if (cursym)
-      b = splitpoint;
-    else
       a = splitpoint;
+    else
+      b = splitpoint;
 
     // verbose print
     if (verbose) printf("\n----- i=%d -----\n", i);
@@ -164,9 +165,13 @@ int main(int argc, char *argv[])
     if (verbose) printf("\nInterval set:\na = %lf\nb = %lf\n", a, b);
     if(verbose && underflow) printf("UNDERFLOW DETECTED!\n");
   }
-  
-  if(inaccurate) printf("\nWARNING - result may be inaccurate: underflow detected!");
-  printf("\n");
+
+  int L = ceil(log2(1/(b-a))) + 1;
+  float coderate = (float)L / sourcelen;
+
+  printf("\nEncoded word length: %d bit\n", L);
+  printf("Code rate: %f bit/symbol\n", coderate);
+  if(inaccurate) printf("WARNING - result may be inaccurate: underflow detected!\n");
 
   return 0;
 }
