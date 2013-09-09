@@ -20,9 +20,6 @@ unsigned char atoprob(char *);
 // converts arg into sourcelen
 unsigned char atosourcelen(char *);
 
-// renormalizes the interval
-void renormalize();
-
 
 
 // the probability that a symbol takes the value 0
@@ -41,12 +38,7 @@ double a;
 double b;
 
 
-void renormalize()
-{
-  a = 0;
-  b = 1;
-  if (verbose) printf("Interval renormalized!\n");
-}
+
 
 unsigned char atosourcelen(char *arg)
 {
@@ -178,12 +170,16 @@ int main(int argc, char *argv[])
     // interval renormalization
     if(b < 0.5) //R1
     {
-      renormalize();
+      a *= 2;
+      b *= 2;
+      if (verbose) printf("Interval renorlized!\n");
       r1count++;
     }
     else if (a > 0.5) //R2
     {
-      renormalize();
+      a = 2*(a-0.5);
+      b = 2*(b-0.5);
+      if (verbose) printf("Interval renormalized!\n");
       r2count++;
     }
   }
