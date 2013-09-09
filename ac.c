@@ -20,6 +20,9 @@ unsigned char atoprob(char *);
 // converts arg into sourcelen
 unsigned char atosourcelen(char *);
 
+// renormalizes the interval
+void renormalize();
+
 
 
 // the probability that a symbol takes the value 0
@@ -38,7 +41,12 @@ double a;
 double b;
 
 
-
+void renormalize()
+{
+  a = 0;
+  b = 1;
+  if (verbose) printf("Interval renormalized!\n");
+}
 
 unsigned char atosourcelen(char *arg)
 {
@@ -134,6 +142,8 @@ int main(int argc, char *argv[])
   if(verbose) printf("ac invoked with: p0 = %lf, sourcelen = %d\n", p0, sourcelen);
 
   int i;
+  int r1count = 0;
+  int r2count = 0;
   unsigned char cursym;
   unsigned char underflow;
   unsigned char inaccurate = 0;
@@ -163,10 +173,22 @@ int main(int argc, char *argv[])
     if (verbose) printf("Source symbol: ");
     printf("%d", cursym);
     if (verbose) printf("\nInterval set:\na = %lf\nb = %lf\n", a, b);
-    if(verbose && underflow) printf("UNDERFLOW DETECTED!\n");
+    if (verbose && underflow) printf("UNDERFLOW DETECTED!\n");
+
+    // interval renormalization
+    if(b < 0.5) //R1
+    {
+      renormalize();
+      r1count++;
+    }
+    else if (a > 0.5) //R2
+    {
+      renormalize();
+      r2count++;
+    }
   }
 
-  int L = ceil(log2(1/(b-a))) + 1;
+  int L = ceil(log2(1/(b-a))) + 1 + r1count + r2count;
   float coderate = (float)L / sourcelen;
 
   printf("\nEncoded word length: %d bit\n", L);
