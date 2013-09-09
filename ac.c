@@ -171,6 +171,7 @@ int main(int argc, char *argv[])
 
   printf("\nEncoded word length: %d bit\n", L);
   printf("Code rate: %f bit/symbol\n", coderate);
+  printf("Theoric source entropy: %lf\n", -p0*log2(p0) - (1-p0)*log2(1-p0));
   if(inaccurate) printf("WARNING - result may be inaccurate: underflow detected!\n");
 
   return 0;
