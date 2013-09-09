@@ -134,12 +134,22 @@ int main(int argc, char *argv[])
 
   int i;
   unsigned char cursym;
+  unsigned char underflow;
+  unsigned char inaccurate = 0;
   double splitpoint;
   printf("Source:\n");
   for (i = 0; i < sourcelen; ++i)
   {
+    underflow = 0;
     cursym = emit_source_symbol(); //the current symbol emitted by the source
     splitpoint = a + p0 * (b-a);  //the split point between the left and the right sides of the interval
+    
+    // Underflow detection
+    if(splitpoint == a || splitpoint == b)
+    {
+      underflow = 1;
+      inaccurate = 1;
+    }
 
     // interval update
     if (cursym)
@@ -147,11 +157,15 @@ int main(int argc, char *argv[])
     else
       a = splitpoint;
 
+    // verbose print
     if (verbose) printf("\n----- i=%d -----\n", i);
     if (verbose) printf("Source symbol: ");
     printf("%d", cursym);
     if (verbose) printf("\nInterval set:\na = %lf\nb = %lf\n", a, b);
+    if(verbose && underflow) printf("UNDERFLOW DETECTED!\n");
   }
+  
+  if(inaccurate) printf("\nWARNING - result may be inaccurate: underflow detected!");
   printf("\n");
 
   return 0;
