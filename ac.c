@@ -20,6 +20,8 @@ unsigned char atoprob(char *);
 // converts arg into sourcelen
 unsigned char atosourcelen(char *);
 
+void emit_last_symbols(double, unsigned char *, int);
+
 
 
 // the probability that a symbol takes the value 0
@@ -42,6 +44,17 @@ double b;
 
 
 
+void emit_last_symbols(double a, unsigned char * emitted_symbols, int length)
+{
+  int symbols = floor(a * pow(2, length));
+  int i=0;
+  unsigned char one = 1;
+
+  for (i = 0; i < length; ++i)
+  {
+    emitted_symbols[length - i - 1] = (symbols >> i) & one;
+  }
+}
 
 unsigned char atosourcelen(char *arg)
 {
@@ -145,7 +158,10 @@ int main(int argc, char *argv[])
   unsigned char cursym;
   unsigned char underflow;
   unsigned char inaccurate = 0;
+  unsigned char outword[sourcelen + 100];
+  int outcount = 0;
   double splitpoint;
+
   printf("Source:\n");
   for (i = 0; i < sourcelen; ++i)
   {
@@ -184,6 +200,7 @@ int main(int argc, char *argv[])
       b *= 2;
       if (verbose) printf("Interval renormalized!\n");
       r1count++;
+      outword[outcount++] = 0;
     }
     else if (a > 0.5) //R2
     {
@@ -191,18 +208,42 @@ int main(int argc, char *argv[])
       b = 2*(b-0.5);
       if (verbose) printf("Interval renormalized!\n");
       r2count++;
+      outword[outcount++] = 1;
     }
 
     // probability estimation update
     pe = (1+(double)cnt0)/(2+cntTot);
   }
 
-  int L = ceil(log2(1/(b-a))) + 1 + r1count + r2count;
-  float coderate = (float)L / sourcelen;
+  // estimates the length of the last encoded symbols, since last renormalization
+  int lastemitted_length = ceil(log2(1/(b-a))) + 1;
 
-  printf("\nEncoded word length: %d bit\n", L);
+  // calculates the estimation of the length of the encoded word
+  int length_estimation = lastemitted_length + r1count + r2count;
+
+  // calculates the coderate
+  float coderate = (float)length_estimation / sourcelen;
+
+  // calculates the theoric entropy
+  double theoric_entropy = -p0*log2(p0) - (1-p0)*log2(1-p0);
+  
+  // includes the last emitted symbols into the encoded word
+  unsigned char lastemitted_symbols[lastemitted_length];
+  emit_last_symbols(a, lastemitted_symbols, lastemitted_length);
+  for(i=0; i<lastemitted_length; i++)
+  {
+    outword[outcount++] = lastemitted_symbols[i];
+  }
+
+  //prints output
+  printf("\nEncoded word (%d): ", outcount);
+  for (i = 0; i < outcount; ++i)
+  {
+    printf("%d", outword[i]);
+  }
+  printf("\nEncoded word length: %d bit\n", length_estimation);
   printf("Code rate: %f bit/symbol\n", coderate);
-  printf("Theoric source entropy: %lf\n", -p0*log2(p0) - (1-p0)*log2(1-p0));
+  printf("Theoric source entropy: %lf\n", theoric_entropy);
   if(inaccurate) printf("WARNING - result may be inaccurate: underflow detected!\n");
 
   return 0;
