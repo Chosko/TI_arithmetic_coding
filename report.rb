@@ -14,8 +14,10 @@ for i in 0...PROBS.length
     num = 2**i
     result_array = `./ac.out #{prob} #{num}`.split("\n").select{|el| (el.include? "Code rate") || (el.include? "Theoric") || (el.include? "WARNING")}
     underflow = false
-    if result_array.include? "WARNING - result may be inaccurate: underflow detected!"
+    correct_bits = 0
+    if result_array.select{|el| el.include? "WARNING"}.length > 0
       underflow = true
+      correct_bits = result_array.select{|el| el.include? "WARNING"}[0].delete("WARNING - result may be inaccurate: underflow detected at ").delete("th symbol!\n").delete("-").to_i
     else
       result_array = result_array.map{|e| e.split(": ")[1].delete(" bit/symbol")}
     end
@@ -25,7 +27,8 @@ for i in 0...PROBS.length
       underflow: underflow,
       rate: nil,
       entropy: nil,
-      distance: nil
+      distance: nil,
+      correct_bits: correct_bits
     }
     if !underflow
       result[:rate] = result_array[0].to_f
@@ -39,7 +42,7 @@ for i in 0...PROBS.length
   reports << report
 end
 
-def print_table reports, symbol
+def print_table reports, symbol, invert = false
   for i in RANGE
     num = 2**i
     print "\t #{num}"
@@ -52,10 +55,18 @@ def print_table reports, symbol
   reports.each do |report|
     print "\n #{report[:prob]}"  
     report[:results].each do |result|
-      if result[:underflow]
-        print "\t|"
+      if !invert
+        if result[:underflow]
+          print "\t|"
+        else
+          printf result[symbol] < 0 ? "\t|%.3f" : "\t|%.4f", result[symbol]
+        end
       else
-        printf result[symbol] < 0 ? "\t|%.3f" : "\t|%.4f", result[symbol]
+        if !result[:underflow]
+          print "\t|"
+        else
+          printf result[symbol] < 0 ? "\t|%d" : "\t|%d", result[symbol]
+        end
       end
     end
     print "\t|\n--------|"
@@ -76,3 +87,6 @@ print_table reports, :entropy
 
 puts "\nDIFFERENZA TRA IL RATE DI CODIFICA E L'ENTROPIA TEORICA"
 print_table reports, :distance
+
+puts "\nNUMERO DI SIMBOLI EMESSI PRIMA DI INCORRERE IN UNDERFLOW"
+print_table reports, :correct_bits, true

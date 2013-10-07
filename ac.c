@@ -129,7 +129,7 @@ int main(int argc, char *argv[])
   sourcelen = DEFAULT_SOURCELEN;
   a = 0;
   b = 1;
-  srand(time(NULL));
+  srand(clock(NULL));
   if(!get_args(argc, argv)) return 0;
   if(verbose) printf("ac invoked with: p0 = %lf, sourcelen = %d\n", p0, sourcelen);
 
@@ -149,7 +149,8 @@ int main(int argc, char *argv[])
     if(p0 != 1 && (splitpoint == a || splitpoint == b))
     {
       underflow = 1;
-      inaccurate = 1;
+      if(!inaccurate)
+        inaccurate = i+1;
     }
 
     // interval update
@@ -172,7 +173,7 @@ int main(int argc, char *argv[])
   printf("\nEncoded word length: %d bit\n", L);
   printf("Code rate: %f bit/symbol\n", coderate);
   printf("Theoric source entropy: %lf\n", -p0*log2(p0) - (1-p0)*log2(1-p0));
-  if(inaccurate) printf("WARNING - result may be inaccurate: underflow detected!\n");
+  if(inaccurate) printf("WARNING - result may be inaccurate: underflow detected at %dth symbol!\n", inaccurate);
 
   return 0;
 }
