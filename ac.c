@@ -172,7 +172,7 @@ int main(int argc, char *argv[])
     {
       a *= 2;
       b *= 2;
-      if (verbose) printf("Interval renorlized!\n");
+      if (verbose) printf("Interval renormalized!\n");
       r1count++;
     }
     else if (a > 0.5) //R2
