@@ -28,13 +28,13 @@ void emit_last_symbols(double, unsigned char *, int);
 double p01;
 
 // the estimated probability (context 1)
-double pe0;
+double pe1;
 
 // the probability that a symbol takes the value 0 (context 2)
 double p02;
 
 // the estimated probability (context 2)
-double pe;
+double pe2;
 
 // the length of the source stream
 int sourcelen;
@@ -158,9 +158,9 @@ unsigned char get_args(int argc, char *argv[])
   return 1;
 }
 
-unsigned char emit_source_symbol()
+unsigned char emit_source_symbol(context)
 {
-  return ((double)(rand()%1000)) / 1000 >= p01;
+  return ((double)(rand()%1000)) / 1000 >= (context ? p02 : p01);
 }
 
 int main(int argc, char *argv[])
@@ -171,7 +171,8 @@ int main(int argc, char *argv[])
   sourcelen = DEFAULT_SOURCELEN;
   a = 0;
   b = 1;
-  pe = 0.5;
+  pe1 = 0.5;
+  pe2 = 0.5;
   srand(time(NULL));
   if(!get_args(argc, argv)) return 0;
   if(p02 == -1) p02 = p01;
@@ -180,8 +181,10 @@ int main(int argc, char *argv[])
   int i;
   int r1count = 0;
   int r2count = 0;
-  int cnt0 = 0;
-  int cntTot = 0;
+  int cnt01 = 0;
+  int cntTot1 = 0;
+  int cnt02 = 0;
+  int cntTot2 = 0;
   unsigned char cursym;
   unsigned char underflow;
   unsigned char inaccurate = 0;
@@ -192,54 +195,112 @@ int main(int argc, char *argv[])
   printf("Source:\n");
   for (i = 0; i < sourcelen; ++i)
   {
-    underflow = 0;
-    cursym = emit_source_symbol(); //the current symbol emitted by the source
-    splitpoint = a + pe * (b-a);  //the split point between the left and the right sides of the interval
-    if (!cursym) cnt0 ++;
-    cntTot++;
-
-    
-    // Underflow detection
-    if(pe != 1 && (splitpoint == a || splitpoint == b))
+    if(i%2)
     {
-      underflow = 1;
-      inaccurate = 1;
-    }
+      underflow = 0;
+      cursym = emit_source_symbol(i%2); //the current symbol emitted by the source
 
-    // interval update
-    if (cursym)
-      a = splitpoint;
+      splitpoint = a + pe1 * (b-a);  //the split point between the left and the right sides of the interval
+      if (!cursym) cnt01 ++;
+      cntTot1++;
+
+      
+      // Underflow detection
+      if(pe1 != 1 && (splitpoint == a || splitpoint == b))
+      {
+        underflow = 1;
+        inaccurate = 1;
+      }
+
+      // interval update
+      if (cursym)
+        a = splitpoint;
+      else
+        b = splitpoint;
+
+      // verbose print
+      if (verbose) printf("\n----- i=%d -----\n", i);
+      if (verbose) printf("Context: %d\n", i%2);
+      if (verbose) printf("Source symbol: ");
+      printf("%d", cursym);
+      if (verbose) printf("\nEstimated probability of Zero: %lf\n", pe1);
+      if (verbose) printf("Interval set:\na = %lf\nb = %lf\n", a, b);
+      if (verbose && underflow) printf("UNDERFLOW DETECTED!\n");
+
+      // interval renormalization
+      if(b < 0.5) //R1
+      {
+        a *= 2;
+        b *= 2;
+        if (verbose) printf("Interval renormalized!\n");
+        r1count++;
+        outword[outcount++] = 0;
+      }
+      else if (a > 0.5) //R2
+      {
+        a = 2*(a-0.5);
+        b = 2*(b-0.5);
+        if (verbose) printf("Interval renormalized!\n");
+        r2count++;
+        outword[outcount++] = 1;
+      }
+
+      // probability estimation update
+      pe1 = (1+(double)cnt01)/(2+cntTot1);
+    }
     else
-      b = splitpoint;
-
-    // verbose print
-    if (verbose) printf("\n----- i=%d -----\n", i);
-    if (verbose) printf("Source symbol: ");
-    printf("%d", cursym);
-    if (verbose) printf("\nEstimated probability of Zero: %lf\n", pe);
-    if (verbose) printf("Interval set:\na = %lf\nb = %lf\n", a, b);
-    if (verbose && underflow) printf("UNDERFLOW DETECTED!\n");
-
-    // interval renormalization
-    if(b < 0.5) //R1
     {
-      a *= 2;
-      b *= 2;
-      if (verbose) printf("Interval renormalized!\n");
-      r1count++;
-      outword[outcount++] = 0;
-    }
-    else if (a > 0.5) //R2
-    {
-      a = 2*(a-0.5);
-      b = 2*(b-0.5);
-      if (verbose) printf("Interval renormalized!\n");
-      r2count++;
-      outword[outcount++] = 1;
-    }
+      underflow = 0;
+      cursym = emit_source_symbol(i%2); //the current symbol emitted by the source
 
-    // probability estimation update
-    pe = (1+(double)cnt0)/(2+cntTot);
+      splitpoint = a + pe2 * (b-a);  //the split point between the left and the right sides of the interval
+      if (!cursym) cnt02 ++;
+      cntTot2++;
+
+      
+      // Underflow detection
+      if(pe2 != 1 && (splitpoint == a || splitpoint == b))
+      {
+        underflow = 1;
+        inaccurate = 1;
+      }
+
+      // interval update
+      if (cursym)
+        a = splitpoint;
+      else
+        b = splitpoint;
+
+      // verbose print
+      if (verbose) printf("\n----- i=%d -----\n", i);
+      if (verbose) printf("Source symbol: ");
+      if (verbose) printf("Context: %d\n", i%2);
+      printf("%d", cursym);
+      if (verbose) printf("\nEstimated probability of Zero: %lf\n", pe2);
+      if (verbose) printf("Interval set:\na = %lf\nb = %lf\n", a, b);
+      if (verbose && underflow) printf("UNDERFLOW DETECTED!\n");
+
+      // interval renormalization
+      if(b < 0.5) //R1
+      {
+        a *= 2;
+        b *= 2;
+        if (verbose) printf("Interval renormalized!\n");
+        r1count++;
+        outword[outcount++] = 0;
+      }
+      else if (a > 0.5) //R2
+      {
+        a = 2*(a-0.5);
+        b = 2*(b-0.5);
+        if (verbose) printf("Interval renormalized!\n");
+        r2count++;
+        outword[outcount++] = 1;
+      }
+
+      // probability estimation update
+      pe2 = (1+(double)cnt02)/(2+cntTot2);
+    }
   }
 
   // estimates the length of the last encoded symbols, since last renormalization
