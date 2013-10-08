@@ -4,7 +4,7 @@ if ARGV.include? "-c"
 end
 
 PROBS1 = [1, 2, 5, 10, 30, 50, 70, 90, 95, 98, 99]
-PROBS2 = [nil]
+PROBS2 = [1, 10, 50, 90, 99]
 RANGE = 3..16
 
 reports = []
