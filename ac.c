@@ -24,10 +24,16 @@ void emit_last_symbols(double, unsigned char *, int);
 
 
 
-// the probability that a symbol takes the value 0
-double p0;
+// the probability that a symbol takes the value 0 (context 1)
+double p01;
 
-// the estimated probability
+// the estimated probability (context 1)
+double pe0;
+
+// the probability that a symbol takes the value 0 (context 2)
+double p02;
+
+// the estimated probability (context 2)
 double pe;
 
 // the length of the source stream
@@ -68,12 +74,27 @@ unsigned char atosourcelen(char *arg)
   }
 }
 
-unsigned char atoprob(char *arg)
+unsigned char atoprob1(char *arg)
 {
-  p0 = (double)atoi(arg);
-  if (p0 <= MAX_P && p0 >= 0)
+  p01 = (double)atoi(arg);
+  if (p01 <= MAX_P && p01 >= 0)
   {
-    p0 /= 100.0;
+    p01 /= 100.0;
+    return 1;
+  }
+  else
+  {
+    print_usage();
+    return 0;
+  }
+}
+
+unsigned char atoprob2(char *arg)
+{
+  p02 = (double)atoi(arg);
+  if (p02 <= MAX_P && p02 >= 0)
+  {
+    p02 /= 100.0;
     return 1;
   }
   else
@@ -99,30 +120,34 @@ unsigned char atoverbose(char *arg)
 
 void print_usage()
 {
-  printf("USAGE: ac [-v] [<p0> [<sourcelen>]]\n");
+  printf("USAGE: ac [-v] [<p01> [<sourcelen> [<p02>]]]]\n");
   printf("  Executes the arithmetic coding of a source that generates a random stream of binary symbols\n");
-  printf("  Default parameters are: <p0> = %d; <sourcelen> = %d\n", DEFAULT_P, DEFAULT_SOURCELEN);
+  printf("  Default parameters are: <p01> = %d; <sourcelen> = %d; <p02> = <p01>\n", DEFAULT_P, DEFAULT_SOURCELEN);
   printf("PARAMETERS:\n");
   printf("  -v\t\tverbose\n");
-  printf("  <p0>\t\tthe probability (in percent) that a symbol takes the value 0\n");
+  printf("  <p01>\t\tthe probability (in percent) that a symbol takes the value 0, in context 1\n");
+  printf("  <p02>\t\tthe probability (in percent) that a symbol takes the value 0, in context 2\n");
   printf("  <sourcelen>\tthe length of the source stream\n");
   printf("CONSTRAINTS:\n");
-  printf("  <p0>\t\tmust be an integer between 0 and %d\n", MAX_P);
+  printf("  <p01>\t\tmust be an integer between 0 and %d\n", MAX_P);
+  printf("  <p02>\t\tmust be an integer between 0 and %d\n", MAX_P);
   printf("  <sourcelen>\tmust be an integer between 1 and %d\n", MAX_SOURCELEN);
 }
 
 unsigned char get_args(int argc, char *argv[])
 {
   if (argc == 1);
-  else if(argc <= 4)
+  else if(argc <= 5)
   {
     int cur_arg = 1;
     if(atoverbose(argv[cur_arg])) cur_arg++;
     if(cur_arg < argc)
     {
-      if(!atoprob(argv[cur_arg])) return 0;
+      if(!atoprob1(argv[cur_arg])) return 0;
       if(++cur_arg < argc)
-        if(!atosourcelen(argv[cur_arg])) return 0; 
+        if(!atosourcelen(argv[cur_arg])) return 0;
+      if(++cur_arg < argc)
+        if(!atoprob2(argv[cur_arg])) return 0;
     }
   }
   else
@@ -135,20 +160,22 @@ unsigned char get_args(int argc, char *argv[])
 
 unsigned char emit_source_symbol()
 {
-  return ((double)(rand()%1000)) / 1000 >= p0;
+  return ((double)(rand()%1000)) / 1000 >= p01;
 }
 
 int main(int argc, char *argv[])
 {
   // Initializes variables
-  p0 = DEFAULT_P/100.0;
+  p01 = DEFAULT_P/100.0;
+  p02 = -1;
   sourcelen = DEFAULT_SOURCELEN;
   a = 0;
   b = 1;
   pe = 0.5;
   srand(time(NULL));
   if(!get_args(argc, argv)) return 0;
-  if(verbose) printf("ac invoked with: p0 = %lf, sourcelen = %d\n", p0, sourcelen);
+  if(p02 == -1) p02 = p01;
+  if(verbose) printf("ac invoked with: p01 = %lf, sourcelen = %d, p02 = %lf\n", p01, sourcelen, p02);
 
   int i;
   int r1count = 0;
@@ -225,7 +252,7 @@ int main(int argc, char *argv[])
   float coderate = (float)length_estimation / sourcelen;
 
   // calculates the theoric entropy
-  double theoric_entropy = -p0*log2(p0) - (1-p0)*log2(1-p0);
+  double theoric_entropy = (-p01*log2(p01) - (1-p01)*log2(1-p01)) * 1/2 + (-p02*log2(p02) - (1-p02)*log2(1-p02)) * 1/2;
   
   // includes the last emitted symbols into the encoded word
   unsigned char lastemitted_symbols[lastemitted_length];
