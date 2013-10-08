@@ -4,7 +4,7 @@ if ARGV.include? "-c"
 end
 
 PROBS1 = [1, 2, 5, 10, 30, 50, 70, 90, 95, 98, 99]
-PROBS2 = [1, 10, 50, 90, 99]
+PROBS2 = [nil]
 RANGE = 3..16
 
 reports = []
@@ -62,7 +62,7 @@ def print_table reports, symbol, invert = false, colors = false, red_major = fal
     print "-------|"
   end
   reports.each do |report|
-    print "\n #{report[:prob].join(',')}"  
+    print "\n #{report[:prob].select{|e| e != nil}.join(',')}"  
     report[:results].each do |result|
       if !invert
         if result[:underflow]
